@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Security: this workflow only runs static pnpm commands. It does NOT
+# interpolate any github.event.* strings into run: blocks, so no
+# command-injection surface.
+jobs:
+  verify:
+    name: typecheck - test - build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck (all workspaces)
+        run: pnpm -r typecheck
+
+      - name: Run API tests (mongodb-memory-server)
+        run: pnpm --filter api test
+
+      - name: Build web (production, code-split)
+        run: pnpm --filter web build

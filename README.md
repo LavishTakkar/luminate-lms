@@ -1,5 +1,7 @@
 # Luminate — AI-Powered LMS
 
+![CI](https://github.com/LavishTakkar/luminate-lms/actions/workflows/ci.yml/badge.svg)
+
 Personal learning platform with AI quiz generation, note summarization, and an AI tutor — powered by Google Gemini, inspired by NotebookLM.
 
 ## Stack
@@ -88,6 +90,10 @@ Get a key at https://aistudio.google.com/app/apikey. Paste into Render's `GEMINI
 - [x] Phase 3 — Premium UI (mesh gradients, glassmorphism, dark mode)
 - [x] Phase 4 — Lesson viewer, AI panels, progress tracking
 - [x] Phase 5 — Polish + deploy (code splitting, helmet, deploy configs)
+- [x] Phase 6 — Quiz taking flow (admin save → student take → server grading)
+- [x] Phase 7 — Admin course authoring UI
+- [x] CI — GitHub Actions runs typecheck, tests, and build on every push/PR
+- [ ] Post-MVP — certificates, file upload, password reset, video player, Playwright E2E
 
 ## License
 
