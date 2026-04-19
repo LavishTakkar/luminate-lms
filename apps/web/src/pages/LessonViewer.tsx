@@ -3,9 +3,16 @@ import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import { motion } from "framer-motion";
-import { ArrowLeft, CheckCircle2, ListChecks, MessageCircle, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  CheckCircle2,
+  ListChecks,
+  MessageCircle,
+  Sparkles,
+} from "lucide-react";
 import { apiGet, apiPost } from "../lib/api";
-import type { Lesson, UserProgress } from "@lms/shared";
+import type { Lesson, QuizSummary, UserProgress } from "@lms/shared";
 import { AppShell } from "../components/AppShell";
 import { GlassCard } from "../components/ui/GlassCard";
 import { MeshGradient } from "../components/ui/MeshGradient";
@@ -31,6 +38,12 @@ export function LessonViewer() {
   const lessonQuery = useQuery<Lesson>({
     queryKey: ["lesson", id],
     queryFn: () => apiGet<Lesson>(`/lessons/${id}`),
+    enabled: !!id,
+  });
+
+  const quizzesQuery = useQuery<QuizSummary[]>({
+    queryKey: ["lesson", id, "quizzes"],
+    queryFn: () => apiGet<QuizSummary[]>(`/quizzes/by-lesson/${id}`),
     enabled: !!id,
   });
 
@@ -84,6 +97,30 @@ export function LessonViewer() {
                 </article>
               </GlassCard>
 
+              {quizzesQuery.data && quizzesQuery.data.length > 0 && (
+                <div className="mt-6">
+                  <h2 className="font-serif text-xl font-semibold">Quizzes for this lesson</h2>
+                  <div className="mt-3 space-y-2">
+                    {quizzesQuery.data.map((q) => (
+                      <Link key={q._id} to={`/quizzes/${q._id}`}>
+                        <GlassCard
+                          tight
+                          className="group flex items-center justify-between transition-transform hover:-translate-y-0.5"
+                        >
+                          <div>
+                            <p className="text-sm font-medium">{q.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {q.questions.length} questions · passing {q.passingScore}%
+                            </p>
+                          </div>
+                          <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
+                        </GlassCard>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="mt-6 flex flex-wrap items-center gap-3">
                 <Button
                   onClick={() => completeMutation.mutate()}
@@ -131,7 +168,11 @@ export function LessonViewer() {
 
               {panel === "summary" && <AISummarizer content={lesson.content} />}
               {panel === "quiz" && (
-                <QuizGenerator content={lesson.content} lessonId={lesson._id} />
+                <QuizGenerator
+                  content={lesson.content}
+                  lessonId={lesson._id}
+                  onSaved={() => qc.invalidateQueries({ queryKey: ["lesson", id, "quizzes"] })}
+                />
               )}
               {panel === "tutor" && (
                 <AITutorChat

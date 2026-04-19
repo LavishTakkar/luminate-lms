@@ -1,24 +1,31 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Loader2, ListChecks } from "lucide-react";
+import { Check, Loader2, ListChecks, Save } from "lucide-react";
 import { apiPost } from "../../lib/api";
-import type { GeneratedQuizResponse } from "@lms/shared";
+import type { GeneratedQuizResponse, QuizSummary } from "@lms/shared";
 import { GlassCard } from "../ui/GlassCard";
 import { Button } from "../ui/Button";
 import { cn } from "../../lib/cn";
+import { useAuth } from "../../lib/auth.tsx";
 
 type Difficulty = "beginner" | "medium" | "advanced";
 
 interface QuizGeneratorProps {
   content: string;
   lessonId?: string;
+  onSaved?: (quiz: QuizSummary) => void;
 }
 
-export function QuizGenerator({ content, lessonId }: QuizGeneratorProps) {
+export function QuizGenerator({ content, lessonId, onSaved }: QuizGeneratorProps) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+
   const [questionCount, setQuestionCount] = useState(5);
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [quiz, setQuiz] = useState<GeneratedQuizResponse["quiz"] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
 
@@ -26,6 +33,7 @@ export function QuizGenerator({ content, lessonId }: QuizGeneratorProps) {
     setLoading(true);
     setError(null);
     setRevealed(new Set());
+    setSaved(false);
     try {
       const data = await apiPost<GeneratedQuizResponse>("/ai/generate-quiz", {
         content,
@@ -38,6 +46,27 @@ export function QuizGenerator({ content, lessonId }: QuizGeneratorProps) {
       setError(err instanceof Error ? err.message : "Failed to generate quiz");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function saveToLesson() {
+    if (!quiz || !lessonId) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const savedQuiz = await apiPost<QuizSummary>("/quizzes", {
+        lessonId,
+        title: quiz.title,
+        questions: quiz.questions,
+        isAIGenerated: true,
+        sourceContent: content.slice(0, 5000),
+      });
+      setSaved(true);
+      onSaved?.(savedQuiz);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save quiz");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -109,11 +138,35 @@ export function QuizGenerator({ content, lessonId }: QuizGeneratorProps) {
             animate={{ opacity: 1, y: 0 }}
             className="mt-6 space-y-4"
           >
-            <div>
-              <h4 className="font-serif text-lg font-semibold">{quiz.title}</h4>
-              <p className="text-xs text-muted-foreground">
-                {quiz.questions.length} questions · tap to reveal answer
-              </p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h4 className="font-serif text-lg font-semibold">{quiz.title}</h4>
+                <p className="text-xs text-muted-foreground">
+                  {quiz.questions.length} questions · tap to reveal answer
+                </p>
+              </div>
+              {isAdmin && lessonId && (
+                <Button
+                  onClick={saveToLesson}
+                  disabled={saving || saved}
+                  size="sm"
+                  variant={saved ? "outline" : "primary"}
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Saving
+                    </>
+                  ) : saved ? (
+                    <>
+                      <Check className="h-4 w-4" /> Saved to lesson
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" /> Save to lesson
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
 
             {quiz.questions.map((q, i) => {

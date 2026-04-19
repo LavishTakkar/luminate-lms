@@ -181,4 +181,93 @@ describe("smoke: auth + courses + enrollment", () => {
     expect(second.status).toBe(200);
     expect(second.body.data.conversationId).toBe(conversationId);
   });
+
+  it("quiz flow: admin saves, student takes it without answers, submits, and is graded", async () => {
+    // Admin creates course + module + lesson
+    const adminLogin = await request(app)
+      .post("/api/auth/login")
+      .send({ email: "admin@example.com", password: "hunter2xyz" });
+    const adminToken = adminLogin.body.data.token;
+
+    const course = await request(app)
+      .post("/api/courses")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ title: "Quiz Host", isPublished: true });
+    const courseId = course.body.data._id;
+
+    const mod = await request(app)
+      .post("/api/modules")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ courseId, title: "Mod" });
+    const moduleId = mod.body.data._id;
+
+    const lesson = await request(app)
+      .post("/api/lessons")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ moduleId, title: "Lesson 1", content: "Content here" });
+    const lessonId = lesson.body.data._id;
+
+    // Admin saves a quiz
+    const quiz = await request(app)
+      .post("/api/quizzes")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({
+        lessonId,
+        title: "Check your knowledge",
+        questions: [
+          {
+            questionText: "2 + 2 = ?",
+            questionType: "multiple-choice",
+            options: ["3", "4", "5", "22"],
+            correctAnswer: "4",
+            explanation: "Simple arithmetic.",
+            points: 10,
+          },
+          {
+            questionText: "The sky is blue.",
+            questionType: "true-false",
+            correctAnswer: "True",
+            points: 10,
+          },
+        ],
+      });
+    expect(quiz.status).toBe(201);
+    const quizId = quiz.body.data._id;
+
+    // Student fetches the quiz — correctAnswer + explanation are stripped
+    const studentLogin = await request(app)
+      .post("/api/auth/login")
+      .send({ email: "student@example.com", password: "hunter2xyz" });
+    const studentToken = studentLogin.body.data.token;
+
+    const taken = await request(app)
+      .get(`/api/quizzes/${quizId}`)
+      .set("Authorization", `Bearer ${studentToken}`);
+    expect(taken.status).toBe(200);
+    expect(taken.body.data.questions[0].correctAnswer).toBe("");
+    expect(taken.body.data.questions[0].explanation).toBeUndefined();
+
+    // Student submits: gets Q1 right, Q2 wrong
+    const submit = await request(app)
+      .post(`/api/quizzes/${quizId}/submit`)
+      .set("Authorization", `Bearer ${studentToken}`)
+      .send({
+        answers: [
+          { questionIndex: 0, answer: "4" },
+          { questionIndex: 1, answer: "False" },
+        ],
+      });
+    expect(submit.status).toBe(200);
+    expect(submit.body.data.scorePercent).toBe(50);
+    expect(submit.body.data.passed).toBe(false);
+    expect(submit.body.data.graded[0].isCorrect).toBe(true);
+    expect(submit.body.data.graded[1].isCorrect).toBe(false);
+    expect(submit.body.data.graded[1].correctAnswer).toBe("True");
+
+    // Admin fetching the same quiz sees the correct answers
+    const asAdmin = await request(app)
+      .get(`/api/quizzes/${quizId}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(asAdmin.body.data.questions[0].correctAnswer).toBe("4");
+  });
 });

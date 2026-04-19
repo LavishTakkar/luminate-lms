@@ -24,6 +24,9 @@ const CourseDetail = lazy(() =>
 const LessonViewer = lazy(() =>
   import("./pages/LessonViewer.tsx").then((m) => ({ default: m.LessonViewer })),
 );
+const QuizPage = lazy(() =>
+  import("./pages/QuizPage.tsx").then((m) => ({ default: m.QuizPage })),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -85,6 +88,16 @@ ReactDOM.createRoot(rootEl).render(
                     <RequireAuth>
                       <RouteSuspense>
                         <LessonViewer />
+                      </RouteSuspense>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/quizzes/:id"
+                  element={
+                    <RequireAuth>
+                      <RouteSuspense>
+                        <QuizPage />
                       </RouteSuspense>
                     </RequireAuth>
                   }

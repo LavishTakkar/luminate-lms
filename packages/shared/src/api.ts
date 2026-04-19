@@ -89,3 +89,40 @@ export interface ChatResponse {
   response: string;
   conversationId: string | null;
 }
+
+export interface QuizSummary {
+  _id: string;
+  lessonId: string;
+  courseId?: string;
+  title: string;
+  description?: string;
+  passingScore: number;
+  questions: Array<{
+    questionText: string;
+    questionType: "multiple-choice" | "true-false" | "short-answer";
+    options?: string[];
+    points: number;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GradedQuestion {
+  questionIndex: number;
+  questionText: string;
+  userAnswer: string | string[];
+  correctAnswer: string | string[];
+  explanation?: string;
+  isCorrect: boolean;
+  pointsEarned: number;
+  pointsPossible: number;
+}
+
+export interface QuizSubmitResponse {
+  scorePercent: number;
+  totalEarned: number;
+  totalPossible: number;
+  passed: boolean;
+  passingScore: number;
+  graded: GradedQuestion[];
+}
