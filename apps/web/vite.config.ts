@@ -12,4 +12,21 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    target: "es2022",
+    cssCodeSplit: true,
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        // Split heavy vendors so the home route doesn't pay for markdown/motion.
+        manualChunks: {
+          react: ["react", "react-dom", "react-router-dom"],
+          motion: ["framer-motion"],
+          markdown: ["react-markdown"],
+          query: ["@tanstack/react-query"],
+          icons: ["lucide-react"],
+        },
+      },
+    },
+  },
 });

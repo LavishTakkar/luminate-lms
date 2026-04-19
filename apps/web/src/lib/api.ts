@@ -3,8 +3,16 @@ import type { ApiResponse } from "@lms/shared";
 
 const TOKEN_KEY = "lms:token";
 
+/**
+ * In dev, Vite's proxy forwards /api → http://localhost:5000.
+ * In production, VITE_API_URL points at the deployed Render API.
+ */
+const baseURL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, "")}/api`
+  : "/api";
+
 export const api = axios.create({
-  baseURL: "/api",
+  baseURL,
   headers: { "Content-Type": "application/json" },
 });
 

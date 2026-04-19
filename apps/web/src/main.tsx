@@ -1,17 +1,29 @@
-import React from "react";
+import React, { lazy } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./lib/auth.tsx";
 import { ThemeProvider } from "./lib/theme.tsx";
 import { RequireAuth } from "./components/RequireAuth.tsx";
+import { ErrorBoundary } from "./components/ErrorBoundary.tsx";
+import { RouteSuspense } from "./components/RouteSuspense.tsx";
 import { Login } from "./pages/Login.tsx";
 import { Register } from "./pages/Register.tsx";
 import { Dashboard } from "./pages/Dashboard.tsx";
-import { CourseList } from "./pages/CourseList.tsx";
-import { CourseDetail } from "./pages/CourseDetail.tsx";
-import { LessonViewer } from "./pages/LessonViewer.tsx";
 import "./styles.css";
+
+// Code-split heavier routes — CourseList pulls in more icons,
+// CourseDetail fetches modules/lessons, LessonViewer pulls
+// react-markdown + all three AI components.
+const CourseList = lazy(() =>
+  import("./pages/CourseList.tsx").then((m) => ({ default: m.CourseList })),
+);
+const CourseDetail = lazy(() =>
+  import("./pages/CourseDetail.tsx").then((m) => ({ default: m.CourseDetail })),
+);
+const LessonViewer = lazy(() =>
+  import("./pages/LessonViewer.tsx").then((m) => ({ default: m.LessonViewer })),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,50 +37,64 @@ if (!rootEl) throw new Error("Missing #root element");
 ReactDOM.createRoot(rootEl).render(
   <React.StrictMode>
     <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <RequireAuth>
-                    <Dashboard />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/courses"
-                element={
-                  <RequireAuth>
-                    <CourseList />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/courses/:id"
-                element={
-                  <RequireAuth>
-                    <CourseDetail />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/lessons/:id"
-                element={
-                  <RequireAuth>
-                    <LessonViewer />
-                  </RequireAuth>
-                }
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </AuthProvider>
-      </QueryClientProvider>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <BrowserRouter>
+              <a
+                href="#main"
+                className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:text-primary-foreground"
+              >
+                Skip to content
+              </a>
+              <Routes>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <RequireAuth>
+                      <Dashboard />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/courses"
+                  element={
+                    <RequireAuth>
+                      <RouteSuspense>
+                        <CourseList />
+                      </RouteSuspense>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/courses/:id"
+                  element={
+                    <RequireAuth>
+                      <RouteSuspense>
+                        <CourseDetail />
+                      </RouteSuspense>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/lessons/:id"
+                  element={
+                    <RequireAuth>
+                      <RouteSuspense>
+                        <LessonViewer />
+                      </RouteSuspense>
+                    </RequireAuth>
+                  }
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ErrorBoundary>
     </ThemeProvider>
   </React.StrictMode>,
 );

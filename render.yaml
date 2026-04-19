@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: lms-api
+    env: node
+    region: oregon
+    plan: free
+    rootDir: .
+    buildCommand: |
+      corepack enable && corepack prepare pnpm@10.33.0 --activate
+      pnpm install --frozen-lockfile
+      pnpm --filter @lms/api build
+    startCommand: pnpm --filter @lms/api start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false

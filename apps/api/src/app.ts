@@ -1,5 +1,8 @@
 import express, { type Express } from "express";
 import cors from "cors";
+import helmet from "helmet";
+import compression from "compression";
+import morgan from "morgan";
 import { errorHandler, notFoundHandler } from "./middleware/error.js";
 import { buildAuthRouter } from "./routes/auth.routes.js";
 import { buildCoursesRouter } from "./routes/courses.routes.js";
@@ -12,16 +15,46 @@ export interface AppDeps {
   jwtSecret: string;
   jwtExpiresIn: string;
   geminiApiKey?: string;
+  /** Whitelist of allowed origins. Empty/undefined ⇒ reflect every origin (dev). */
+  corsOrigins?: string[];
+  /** "development" | "test" | "production" */
+  env?: string;
 }
 
 export function createApp(deps: AppDeps): Express {
   const app = express();
 
-  app.use(cors());
+  // Trust the first proxy (Render / Vercel / Cloudflare sit in front).
+  if (deps.env === "production") app.set("trust proxy", 1);
+
+  // Security headers — relaxed CSP since our frontend is served elsewhere.
+  app.use(
+    helmet({
+      crossOriginEmbedderPolicy: false,
+      contentSecurityPolicy: false,
+    }),
+  );
+
+  app.use(compression());
+
+  // CORS
+  const origins = deps.corsOrigins ?? [];
+  app.use(
+    cors({
+      origin: origins.length === 0 ? true : origins,
+      credentials: true,
+    }),
+  );
+
+  // Request logging — skip during tests so vitest output stays clean.
+  if (deps.env !== "test") {
+    app.use(morgan(deps.env === "production" ? "combined" : "dev"));
+  }
+
   app.use(express.json({ limit: "2mb" }));
 
   app.get("/health", (_req, res) => {
-    res.json({ success: true, data: { status: "ok" } });
+    res.json({ success: true, data: { status: "ok", env: deps.env ?? "unknown" } });
   });
 
   app.use("/api/auth", buildAuthRouter(deps));

@@ -8,6 +8,8 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(16, "JWT_SECRET must be at least 16 characters"),
   JWT_EXPIRES_IN: z.string().default("7d"),
   GEMINI_API_KEY: z.string().optional(),
+  /** Comma-separated list of allowed CORS origins. In dev, any origin is allowed. */
+  CORS_ORIGINS: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -9,7 +9,11 @@ const JWT_EXPIRES_IN = "1h";
 
 describe("smoke: auth + courses + enrollment", () => {
   let mongod: MongoMemoryServer;
-  const app = createApp({ jwtSecret: JWT_SECRET, jwtExpiresIn: JWT_EXPIRES_IN });
+  const app = createApp({
+    jwtSecret: JWT_SECRET,
+    jwtExpiresIn: JWT_EXPIRES_IN,
+    env: "test",
+  });
 
   beforeAll(async () => {
     mongod = await MongoMemoryServer.create();
