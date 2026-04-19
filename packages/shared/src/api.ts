@@ -42,3 +42,50 @@ export interface LoginRequest {
   email: string;
   password: string;
 }
+
+export interface CourseProgressSummary {
+  courseId: string;
+  courseTitle: string;
+  totalLessons: number;
+  completedLessons: number;
+  progressPercentage: number;
+  lastAccessedAt: string;
+  currentLessonId: string | null;
+}
+
+export interface ProgressOverview {
+  courses: CourseProgressSummary[];
+  totals: {
+    enrolledCount: number;
+    completedCourses: number;
+    totalLessonsCompleted: number;
+  };
+}
+
+export interface AIStatusResponse {
+  provider: string;
+  stubbed: boolean;
+}
+
+export interface SummarizeResponse {
+  summary: string;
+}
+
+export interface GeneratedQuizResponse {
+  quiz: {
+    title: string;
+    questions: Array<{
+      questionText: string;
+      questionType: "multiple-choice" | "true-false" | "short-answer";
+      options?: string[];
+      correctAnswer: string;
+      explanation: string;
+      points: number;
+    }>;
+  };
+}
+
+export interface ChatResponse {
+  response: string;
+  conversationId: string | null;
+}

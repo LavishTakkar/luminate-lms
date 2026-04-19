@@ -9,6 +9,8 @@ import { Login } from "./pages/Login.tsx";
 import { Register } from "./pages/Register.tsx";
 import { Dashboard } from "./pages/Dashboard.tsx";
 import { CourseList } from "./pages/CourseList.tsx";
+import { CourseDetail } from "./pages/CourseDetail.tsx";
+import { LessonViewer } from "./pages/LessonViewer.tsx";
 import "./styles.css";
 
 const queryClient = new QueryClient({
@@ -43,6 +45,22 @@ ReactDOM.createRoot(rootEl).render(
                 element={
                   <RequireAuth>
                     <CourseList />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/courses/:id"
+                element={
+                  <RequireAuth>
+                    <CourseDetail />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/lessons/:id"
+                element={
+                  <RequireAuth>
+                    <LessonViewer />
                   </RequireAuth>
                 }
               />

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ArrowUpRight, BookMarked, Loader2, Sparkles } from "lucide-react";
@@ -57,40 +58,42 @@ export function CourseList() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.35, delay: 0.05 * i, ease: [0.16, 1, 0.3, 1] }}
                   >
-                    <GlassCard className="group relative h-full transition-transform hover:-translate-y-1">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <span
-                            className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider ${
-                              DIFFICULTY_TONE[course.difficulty]
-                            }`}
-                          >
-                            {course.difficulty}
-                          </span>
-                          <h2 className="mt-3 font-serif text-2xl font-semibold leading-snug tracking-tight">
-                            {course.title}
-                          </h2>
+                    <Link to={`/courses/${course._id}`} className="block h-full">
+                      <GlassCard className="group relative h-full transition-transform hover:-translate-y-1">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <span
+                              className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider ${
+                                DIFFICULTY_TONE[course.difficulty]
+                              }`}
+                            >
+                              {course.difficulty}
+                            </span>
+                            <h2 className="mt-3 font-serif text-2xl font-semibold leading-snug tracking-tight">
+                              {course.title}
+                            </h2>
+                          </div>
+                          <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-primary" />
                         </div>
-                        <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-primary" />
-                      </div>
-                      <p className="mt-3 text-sm text-muted-foreground line-clamp-3">
-                        {course.description}
-                      </p>
-                      <div className="mt-5 flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="inline-flex items-center gap-1">
-                          <BookMarked className="h-3.5 w-3.5" />
-                          {course.modules?.length ?? 0} modules
-                        </span>
-                        <span>·</span>
-                        <span className="capitalize">{course.category}</span>
-                        {course.tags?.length > 0 && (
-                          <>
-                            <span>·</span>
-                            <span className="truncate">{course.tags.join(", ")}</span>
-                          </>
-                        )}
-                      </div>
-                    </GlassCard>
+                        <p className="mt-3 text-sm text-muted-foreground line-clamp-3">
+                          {course.description}
+                        </p>
+                        <div className="mt-5 flex items-center gap-3 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-1">
+                            <BookMarked className="h-3.5 w-3.5" />
+                            {course.modules?.length ?? 0} modules
+                          </span>
+                          <span>·</span>
+                          <span className="capitalize">{course.category}</span>
+                          {course.tags?.length > 0 && (
+                            <>
+                              <span>·</span>
+                              <span className="truncate">{course.tags.join(", ")}</span>
+                            </>
+                          )}
+                        </div>
+                      </GlassCard>
+                    </Link>
                   </motion.article>
                 ))}
               </div>

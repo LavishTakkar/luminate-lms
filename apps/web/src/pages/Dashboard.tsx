@@ -1,10 +1,22 @@
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowRight, BookOpen, Brain, MessageCircle } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  Brain,
+  CheckCircle2,
+  Flame,
+  MessageCircle,
+  Sparkles,
+} from "lucide-react";
 import { useAuth } from "../lib/auth.tsx";
+import { apiGet } from "../lib/api";
+import type { ProgressOverview } from "@lms/shared";
 import { AppShell } from "../components/AppShell.tsx";
 import { GlassCard } from "../components/ui/GlassCard";
 import { MeshGradient } from "../components/ui/MeshGradient";
+import { cn } from "../lib/cn";
 
 const FEATURES = [
   {
@@ -15,7 +27,7 @@ const FEATURES = [
   {
     icon: BookOpen,
     title: "Quiz Generator",
-    body: "Spin up quizzes from any content to test what you've learned.",
+    body: "Spin up quizzes from any lesson to test what you've learned.",
   },
   {
     icon: MessageCircle,
@@ -26,6 +38,13 @@ const FEATURES = [
 
 export function Dashboard() {
   const { user } = useAuth();
+  const overview = useQuery<ProgressOverview>({
+    queryKey: ["progress", "overview"],
+    queryFn: () => apiGet<ProgressOverview>("/progress/overview"),
+  });
+
+  const stats = overview.data?.totals;
+  const recent = overview.data?.courses.slice(0, 3) ?? [];
 
   return (
     <div className="relative min-h-screen">
@@ -58,8 +77,68 @@ export function Dashboard() {
             </Link>
           </div>
 
+          {/* Stat strip */}
+          {stats && stats.enrolledCount > 0 && (
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              <StatCard
+                icon={BookOpen}
+                label="Enrolled"
+                value={stats.enrolledCount}
+                tone="primary"
+              />
+              <StatCard
+                icon={CheckCircle2}
+                label="Completed courses"
+                value={stats.completedCourses}
+                tone="emerald"
+              />
+              <StatCard
+                icon={Flame}
+                label="Lessons finished"
+                value={stats.totalLessonsCompleted}
+                tone="amber"
+              />
+            </div>
+          )}
+
+          {/* Continue learning */}
+          {recent.length > 0 && (
+            <div className="mt-10">
+              <h2 className="font-serif text-2xl font-semibold">Continue learning</h2>
+              <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                {recent.map((c) => (
+                  <Link key={c.courseId} to={`/courses/${c.courseId}`}>
+                    <GlassCard className="group transition-transform hover:-translate-y-0.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="font-serif text-xl font-semibold leading-snug">
+                            {c.courseTitle}
+                          </h3>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {c.completedLessons} / {c.totalLessons} lessons
+                          </p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                      </div>
+                      <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/50 dark:bg-white/5">
+                        <div
+                          className="h-full rounded-full bg-primary"
+                          style={{ width: `${c.progressPercentage}%` }}
+                        />
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {c.progressPercentage}% complete
+                      </p>
+                    </GlassCard>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Feature bento */}
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <h2 className="mt-12 font-serif text-2xl font-semibold">What you can do</h2>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((feature, i) => (
               <motion.div
                 key={feature.title}
@@ -78,41 +157,57 @@ export function Dashboard() {
             ))}
           </div>
 
-          {/* Phase banner */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.4 }}
-            className="mt-10"
-          >
-            <GlassCard>
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="max-w-xl">
-                  <h2 className="font-serif text-2xl font-semibold">The app is online</h2>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Phases 1–3 are live. Real Gemini calls turn on the moment you paste a
-                    <code className="mx-1 rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
-                      GEMINI_API_KEY
-                    </code>
-                    into <code className="font-mono text-xs">.env</code>. Until then, AI
-                    responses are stubbed so everything still demos.
-                  </p>
+          {/* Phase banner — only for first-run users with no enrollment yet */}
+          {stats && stats.enrolledCount === 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.4 }}
+              className="mt-10"
+            >
+              <GlassCard>
+                <div className="flex items-start gap-3">
+                  <Sparkles className="mt-0.5 h-5 w-5 text-primary" />
+                  <div>
+                    <h3 className="font-serif text-xl font-semibold">Get started</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Browse the library and enroll in a course to start tracking progress.
+                    </p>
+                  </div>
                 </div>
-                <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                  <span>
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" /> API
-                    connected
-                  </span>
-                  <span>
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" /> Role:{" "}
-                    {user?.role}
-                  </span>
-                </div>
-              </div>
-            </GlassCard>
-          </motion.div>
+              </GlassCard>
+            </motion.div>
+          )}
         </motion.section>
       </AppShell>
     </div>
+  );
+}
+
+interface StatCardProps {
+  icon: typeof BookOpen;
+  label: string;
+  value: number;
+  tone: "primary" | "emerald" | "amber";
+}
+
+function StatCard({ icon: Icon, label, value, tone }: StatCardProps) {
+  const tones = {
+    primary: "bg-primary/15 text-primary",
+    emerald: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+    amber: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+  };
+  return (
+    <GlassCard tight>
+      <div className="flex items-center gap-3">
+        <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl", tones[tone])}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">{label}</p>
+          <p className="font-serif text-2xl font-semibold">{value}</p>
+        </div>
+      </div>
+    </GlassCard>
   );
 }
