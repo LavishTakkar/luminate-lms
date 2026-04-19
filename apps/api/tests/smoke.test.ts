@@ -142,4 +142,39 @@ describe("smoke: auth + courses + enrollment", () => {
     expect(res.status).toBe(200);
     expect(res.body.data.summary).toMatch(/STUB/);
   });
+
+  it("AI status reports stubbed when no key is configured", async () => {
+    const login = await request(app)
+      .post("/api/auth/login")
+      .send({ email: "admin@example.com", password: "hunter2xyz" });
+    const token = login.body.data.token;
+
+    const res = await request(app)
+      .get("/api/ai/status")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ provider: "gemini", stubbed: true });
+  });
+
+  it("AI chat persists conversation and returns a stable conversationId", async () => {
+    const login = await request(app)
+      .post("/api/auth/login")
+      .send({ email: "admin@example.com", password: "hunter2xyz" });
+    const token = login.body.data.token;
+
+    const first = await request(app)
+      .post("/api/ai/chat")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ message: "Hello, tutor." });
+    expect(first.status).toBe(200);
+    const conversationId = first.body.data.conversationId;
+    expect(conversationId).toMatch(/^[a-f0-9]{24}$/);
+
+    const second = await request(app)
+      .post("/api/ai/chat")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ message: "What did I just say?", conversationId });
+    expect(second.status).toBe(200);
+    expect(second.body.data.conversationId).toBe(conversationId);
+  });
 });
