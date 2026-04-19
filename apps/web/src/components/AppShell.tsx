@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  PenSquare,
   Sparkles,
   X,
 } from "lucide-react";
@@ -15,9 +16,10 @@ import { cn } from "../lib/cn";
 import { ThemeToggle } from "./ui/ThemeToggle";
 import { Button } from "./ui/Button";
 
-const NAV = [
+const NAV: Array<{ to: string; label: string; icon: typeof BookOpen; adminOnly?: boolean }> = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/courses", label: "Courses", icon: BookOpen },
+  { to: "/admin/courses/new", label: "New course", icon: PenSquare, adminOnly: true },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -115,7 +117,7 @@ function SidebarInner({
         </div>
 
         <nav className="mt-8 flex flex-1 flex-col gap-1">
-          {NAV.map((item) => (
+          {NAV.filter((item) => !item.adminOnly || user?.role === "admin").map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
