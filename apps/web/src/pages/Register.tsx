@@ -1,6 +1,13 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Sparkles } from "lucide-react";
 import { useAuth } from "../lib/auth.tsx";
+import { GlassCard } from "../components/ui/GlassCard";
+import { MeshGradient } from "../components/ui/MeshGradient";
+import { Button } from "../components/ui/Button";
+import { Input } from "../components/ui/Input";
+import { ThemeToggle } from "../components/ui/ThemeToggle";
 
 export function Register() {
   const { register } = useAuth();
@@ -27,66 +34,123 @@ export function Register() {
   }
 
   return (
-    <div className="shell">
-      <h1>Create account</h1>
-      <form onSubmit={handleSubmit} className="card" style={{ maxWidth: 480 }}>
-        <div style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" }}>
-          <div className="field">
-            <label htmlFor="firstName">First name</label>
-            <input
-              id="firstName"
-              className="input"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              required
-            />
+    <div className="relative min-h-screen overflow-hidden">
+      <MeshGradient />
+      <div className="relative z-10 flex min-h-screen flex-col p-6">
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_6px_20px_-6px_hsl(var(--primary)/0.7)]">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <div className="font-serif text-xl font-semibold tracking-tight">Luminate</div>
           </div>
-          <div className="field">
-            <label htmlFor="lastName">Last name</label>
-            <input
-              id="lastName"
-              className="input"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              required
-            />
-          </div>
-        </div>
-        <div className="field">
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            className="input"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            className="input"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="new-password"
-          />
-          <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
-            Minimum 8 characters, including one letter and one digit.
-          </div>
-        </div>
-        <button className="btn" disabled={submitting}>
-          {submitting ? "Creating…" : "Create account"}
-        </button>
-        {error && <div className="error">{error}</div>}
-        <p className="muted" style={{ marginTop: 16 }}>
-          Already registered? <Link to="/login">Sign in</Link>
-        </p>
-      </form>
+          <ThemeToggle />
+        </header>
+
+        <main className="flex flex-1 items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full max-w-md"
+          >
+            <GlassCard className="sm:p-10">
+              <div className="mb-8 text-center">
+                <h1 className="font-serif text-4xl font-semibold tracking-tight">
+                  Start learning
+                </h1>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Create your account to unlock courses and AI tutoring.
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="firstName"
+                      className="text-xs font-medium text-muted-foreground"
+                    >
+                      First name
+                    </label>
+                    <Input
+                      id="firstName"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                      placeholder="Ada"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="lastName"
+                      className="text-xs font-medium text-muted-foreground"
+                    >
+                      Last name
+                    </label>
+                    <Input
+                      id="lastName"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                      placeholder="Lovelace"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="email" className="text-xs font-medium text-muted-foreground">
+                    Email
+                  </label>
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="password" className="text-xs font-medium text-muted-foreground">
+                    Password
+                  </label>
+                  <Input
+                    id="password"
+                    type="password"
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="Min 8 chars, letters + digits"
+                  />
+                </div>
+
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+
+                <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+                  {submitting ? "Creating…" : "Create account"}
+                </Button>
+              </form>
+
+              <p className="mt-6 text-center text-sm text-muted-foreground">
+                Have an account already?{" "}
+                <Link to="/login" className="font-medium text-primary hover:underline">
+                  Sign in
+                </Link>
+              </p>
+            </GlassCard>
+          </motion.div>
+        </main>
+      </div>
     </div>
   );
 }

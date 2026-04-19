@@ -1,54 +1,107 @@
-* { box-sizing: border-box; }
-html, body, #root { height: 100%; }
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: #fafafa;
-  color: #1a1a1a;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Design tokens — lavender/deep-purple primary, midnight-blue dark.
+  All colors stored as HSL triplets so opacity modifiers work:
+    bg-primary/50   →   hsl(var(--primary) / 0.5)
+*/
+
+@layer base {
+  :root {
+    --background: 280 40% 98%;
+    --foreground: 260 30% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 260 30% 10%;
+
+    --primary: 250 70% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 270 50% 94%;
+    --secondary-foreground: 260 30% 20%;
+
+    --muted: 270 30% 96%;
+    --muted-foreground: 260 15% 45%;
+
+    --accent: 300 70% 92%;
+    --accent-foreground: 280 50% 25%;
+
+    --destructive: 0 72% 52%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 260 30% 90%;
+    --input: 260 30% 90%;
+    --ring: 250 70% 50%;
+
+    --glass: 0 0% 100%;
+
+    --radius: 14px;
+  }
+
+  .dark {
+    --background: 250 30% 7%;
+    --foreground: 260 15% 92%;
+
+    --card: 250 25% 11%;
+    --card-foreground: 260 15% 92%;
+
+    --primary: 262 90% 72%;
+    --primary-foreground: 250 30% 10%;
+
+    --secondary: 255 25% 18%;
+    --secondary-foreground: 260 15% 92%;
+
+    --muted: 255 25% 14%;
+    --muted-foreground: 260 10% 65%;
+
+    --accent: 260 40% 20%;
+    --accent-foreground: 260 15% 92%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 255 25% 22%;
+    --input: 255 25% 22%;
+    --ring: 262 90% 72%;
+
+    --glass: 250 30% 15%;
+  }
+
+  html, body, #root { height: 100%; }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-serif tracking-tight;
+  }
+
+  /* Reduced motion — kill the mesh drift for users who asked. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
-.shell { max-width: 960px; margin: 0 auto; padding: 24px; }
+@layer components {
+  .glass {
+    @apply bg-[hsl(var(--glass)/0.7)] backdrop-blur-xl border border-white/40 shadow-glass;
+  }
+  .dark .glass {
+    @apply bg-[hsl(var(--glass)/0.6)] border-white/10;
+  }
 
-.card {
-  background: white;
-  border: 1px solid #eaeaea;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 16px;
+  .glass-sm {
+    @apply bg-[hsl(var(--glass)/0.6)] backdrop-blur-md border border-white/30 shadow-glass-sm;
+  }
+  .dark .glass-sm {
+    @apply bg-[hsl(var(--glass)/0.5)] border-white/10;
+  }
 }
-
-.btn {
-  display: inline-block;
-  padding: 8px 16px;
-  border-radius: 6px;
-  border: 1px solid #333;
-  background: #111;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-}
-.btn:hover { background: #333; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.btn-secondary {
-  background: white;
-  color: #111;
-}
-
-.input {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-.field { margin-bottom: 12px; }
-.field label { display: block; margin-bottom: 4px; font-weight: 500; font-size: 13px; }
-
-.error { color: #c00; font-size: 13px; margin-top: 8px; }
-.muted { color: #666; font-size: 13px; }
-h1 { margin: 0 0 16px; }
-h2 { margin: 24px 0 12px; font-size: 18px; }
-
-/* Phase 3 will replace this with Shadcn + Aceternity. */
