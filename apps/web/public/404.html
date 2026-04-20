@@ -1,0 +1,44 @@
+<!doctype html>
+<!--
+  GitHub Pages SPA fallback.
+
+  Pages serves this file for any path that doesn't match a built asset.
+  We encode the original pathname into a query string and redirect to
+  index.html, which decodes it back into a real URL so React Router
+  sees the intended route. Technique from rafgraph/spa-github-pages
+  (MIT licensed).
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Luminate</title>
+    <script>
+      // Number of path segments to keep at the start of the URL.
+      // For https://lavishtakkar.github.io/luminate-lms/... keep 1.
+      // For a custom domain (repo served at the root) set to 0.
+      var pathSegmentsToKeep = 1;
+
+      var l = window.location;
+      l.replace(
+        l.protocol +
+          "//" +
+          l.hostname +
+          (l.port ? ":" + l.port : "") +
+          l.pathname
+            .split("/")
+            .slice(0, 1 + pathSegmentsToKeep)
+            .join("/") +
+          "/?/" +
+          l.pathname
+            .slice(1)
+            .split("/")
+            .slice(pathSegmentsToKeep)
+            .join("/")
+            .replace(/&/g, "~and~") +
+          (l.search ? "&" + l.search.slice(1).replace(/&/g, "~and~") : "") +
+          l.hash,
+      );
+    </script>
+  </head>
+  <body></body>
+</html>

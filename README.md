@@ -13,7 +13,7 @@ Personal learning platform with AI quiz generation, note summarization, and an A
 | Frontend | Vite · React 18 · TypeScript · React Router · TanStack Query · Tailwind · Framer Motion |
 | AI | Google Gemini 1.5 Flash (`@google/generative-ai`) |
 | Database | MongoDB Atlas (free M0 cluster) |
-| Hosting | Render (API) · Vercel (web) — both free tier |
+| Hosting | Fly.io (API) + GitHub Pages (web) · or Render + Vercel · or self-hosted |
 
 ## Local setup
 
@@ -61,27 +61,89 @@ packages/shared     Cross-package TS types
 
 ## Deploying
 
-### Database — MongoDB Atlas (free M0)
-1. Create an M0 cluster at https://mongodb.com/cloud/atlas (takes ~2 minutes).
-2. Add a database user and whitelist `0.0.0.0/0` (or your Render egress range).
-3. Copy the connection string — it goes into `MONGODB_URI`.
+Three mutually exclusive paths below — pick whichever matches your preferences. All three use MongoDB Atlas for the database and Google Gemini for AI.
 
-### API — Render
-This repo ships a `render.yaml` blueprint.
-1. Push to GitHub.
-2. In Render, **New → Blueprint** and point at the repo.
-3. Fill in `MONGODB_URI`, `GEMINI_API_KEY`, `CORS_ORIGINS` (the Vercel URL you'll get in the next step). `JWT_SECRET` is auto-generated.
-4. Render builds, runs `pnpm --filter @lms/api start`, and hits `/health` to confirm.
+### Database — MongoDB Atlas (free M0) — required for all paths
 
-### Web — Vercel
-This repo ships `apps/web/vercel.json`.
-1. In Vercel, **Add New → Project**, import from GitHub, set root directory to `apps/web`.
-2. Set `VITE_API_URL` to your Render URL (e.g. `https://lms-api.onrender.com`).
-3. Deploy.
-4. Copy the Vercel URL back into Render's `CORS_ORIGINS` and redeploy the API.
+1. Create an M0 cluster at https://mongodb.com/cloud/atlas (~2 minutes).
+2. Add a database user and whitelist `0.0.0.0/0` (or your API's egress range).
+3. Copy the connection string — it becomes `MONGODB_URI`.
 
-### Gemini API key — free tier
-Get a key at https://aistudio.google.com/app/apikey. Paste into Render's `GEMINI_API_KEY`. Without a key, the API silently uses stub responses so the app still works.
+### Gemini API key (optional, all paths)
+
+Without it, the AI endpoints silently fall back to stub responses so the app still runs. Get a free key at https://aistudio.google.com/app/apikey.
+
+---
+
+### Path A — GitHub Pages (web) + Fly.io (API)
+
+**Zero-cost-ish, everything on GitHub-aligned infra.** Pages is free and unlimited; Fly's Hobby plan gives a small monthly credit that covers a scale-to-zero 256MB VM.
+
+#### 1. API on Fly.io
+
+```bash
+brew install flyctl                      # or the platform-specific installer
+fly auth signup                          # or `fly auth login` if you have an account
+
+fly launch --no-deploy --copy-config --config fly.toml
+# Accept the defaults except:
+#   - App name: choose something unique (e.g. luminate-lms-api-<yourname>)
+#   - Region:   pick the closest to your users
+
+fly secrets set \
+  MONGODB_URI="mongodb+srv://user:pass@cluster.mongodb.net/lms" \
+  JWT_SECRET="$(openssl rand -base64 48)" \
+  GEMINI_API_KEY="your-gemini-key-or-leave-unset" \
+  CORS_ORIGINS="https://lavishtakkar.github.io"
+
+fly deploy
+fly status                               # confirm the machine is "suspended" or "started"
+```
+
+The `/health` endpoint should return `{"success":true,"data":{"status":"ok"}}`. Note the URL (e.g. `https://luminate-lms-api.fly.dev`) — you'll paste it into GitHub secrets next.
+
+#### 2. Web on GitHub Pages
+
+1. In the repo on GitHub → **Settings → Pages → Source**: set to **GitHub Actions**.
+2. In **Settings → Secrets and variables → Actions → Secrets**: add `VITE_API_URL` with your Fly URL from step 1 (no trailing slash).
+3. Push any commit to `main` — `deploy-pages.yml` runs automatically. Or trigger manually via **Actions → Deploy web to GitHub Pages → Run workflow**.
+4. The site goes live at `https://lavishtakkar.github.io/luminate-lms/`.
+
+#### 3. CORS round-trip
+
+Once you know the final Pages URL, update `CORS_ORIGINS` on Fly to match:
+```bash
+fly secrets set CORS_ORIGINS="https://lavishtakkar.github.io"
+```
+
+This path uses [`fly.toml`](fly.toml), [`apps/api/Dockerfile`](apps/api/Dockerfile), and [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) — all committed.
+
+---
+
+### Path B — Render (API) + Vercel (web)
+
+Simpler OAuth-driven setup, no CLI. See [`render.yaml`](render.yaml) and [`apps/web/vercel.json`](apps/web/vercel.json).
+
+1. **Render**: New → Blueprint → point at the repo. Fill in `MONGODB_URI`, `GEMINI_API_KEY`, `CORS_ORIGINS`.
+2. **Vercel**: Add New → Project → root directory `apps/web` → set `VITE_API_URL` to the Render URL.
+3. Paste the Vercel URL back into Render's `CORS_ORIGINS` and redeploy.
+
+Trade-off vs Path A: Render's free web service spins down after 15 minutes idle (cold start ~30s) vs Fly's ~500ms suspend-wake. Vercel has stricter free-tier bandwidth limits than Pages.
+
+---
+
+### Path C — Self-hosted VPS
+
+Any $5/month Docker host. Run:
+
+```bash
+docker build -t luminate-api -f apps/api/Dockerfile .
+docker run -d -p 8080:8080 \
+  -e MONGODB_URI=... -e JWT_SECRET=... -e GEMINI_API_KEY=... -e CORS_ORIGINS=... \
+  --restart unless-stopped luminate-api
+```
+
+Serve `apps/web/dist` (after `pnpm --filter web build`) via nginx or Caddy.
 
 ## Phase status
 
@@ -93,7 +155,12 @@ Get a key at https://aistudio.google.com/app/apikey. Paste into Render's `GEMINI
 - [x] Phase 6 — Quiz taking flow (admin save → student take → server grading)
 - [x] Phase 7 — Admin course authoring UI
 - [x] CI — GitHub Actions runs typecheck, tests, and build on every push/PR
-- [ ] Post-MVP — certificates, file upload, password reset, video player, Playwright E2E
+- [x] Phase 8 — Password reset flow with dev-mode console reset URL
+- [x] Phase 9 — Certificates awarded on 100% course completion
+- [x] Phase 10 — Video player via react-player in lesson viewer
+- [x] Phase 11 — Playwright E2E smoke suite (auth + courses)
+- [x] Deploy path A — Fly.io (API) + GitHub Pages (web) with SPA 404 fallback
+- [ ] Post-MVP — file upload (Cloudinary), learning path suggestions, richer analytics
 
 ## License
 

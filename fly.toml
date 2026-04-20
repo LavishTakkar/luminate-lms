@@ -1,0 +1,40 @@
+# fly.toml — Luminate LMS API on Fly.io
+# Commit this file. Run `fly launch --no-deploy` the first time to register
+# the app name and region, then `fly deploy` thereafter.
+
+app = "luminate-lms-api"
+# Closest to most users. Change to e.g. "bom" (Mumbai), "lhr" (London),
+# "nrt" (Tokyo), "sfo" (San Francisco) if latency matters to you.
+primary_region = "iad"
+
+[build]
+  dockerfile = "apps/api/Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+
+# Set with `fly secrets set MONGODB_URI=... JWT_SECRET=... GEMINI_API_KEY=... CORS_ORIGINS=...`
+# These are NOT committed — Fly injects them at boot.
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # Scale to zero when idle, wake on first request. Cold start ~500ms-2s.
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "get"
+    path = "/health"
+    protocol = "http"
+    timeout = "5s"
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1

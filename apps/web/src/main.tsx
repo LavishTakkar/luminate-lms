@@ -54,7 +54,13 @@ ReactDOM.createRoot(rootEl).render(
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <BrowserRouter>
+            {/*
+              basename must match Vite's `base` so React Router knows the
+              URL prefix when mounted at github.io/luminate-lms/. At build
+              time Vite injects import.meta.env.BASE_URL from its `base`
+              config (trailing slash stripped for Router compatibility).
+            */}
+            <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "")}>
               <a
                 href="#main"
                 className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:text-primary-foreground"
