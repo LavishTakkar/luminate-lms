@@ -141,3 +141,15 @@ export interface AIChatMessage {
   content: string;
   timestamp: string;
 }
+
+export interface Certificate {
+  _id: Id;
+  userId: Id;
+  courseId: Id;
+  courseTitle: string;
+  userFullName: string;
+  slug: string;
+  issuedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}

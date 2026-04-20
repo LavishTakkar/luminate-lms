@@ -11,6 +11,7 @@ import { buildLessonsRouter } from "./routes/lessons.routes.js";
 import { buildAiRouter } from "./routes/ai.routes.js";
 import { buildProgressRouter } from "./routes/progress.routes.js";
 import { buildQuizzesRouter } from "./routes/quizzes.routes.js";
+import { buildCertificatesRouter } from "./routes/certificates.routes.js";
 
 export interface AppDeps {
   jwtSecret: string;
@@ -65,6 +66,7 @@ export function createApp(deps: AppDeps): Express {
   app.use("/api/ai", buildAiRouter(deps));
   app.use("/api/progress", buildProgressRouter(deps));
   app.use("/api/quizzes", buildQuizzesRouter(deps));
+  app.use("/api/certificates", buildCertificatesRouter(deps));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

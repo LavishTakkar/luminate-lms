@@ -1,9 +1,9 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, BookOpen, CheckCircle2, PlayCircle } from "lucide-react";
+import { ArrowLeft, Award, BookOpen, CheckCircle2, PlayCircle } from "lucide-react";
 import { apiGet, apiPost } from "../lib/api";
-import type { Course, Lesson, Module, UserProgress } from "@lms/shared";
+import type { Certificate, Course, Lesson, Module, UserProgress } from "@lms/shared";
 import { AppShell } from "../components/AppShell";
 import { GlassCard } from "../components/ui/GlassCard";
 import { MeshGradient } from "../components/ui/MeshGradient";
@@ -45,6 +45,11 @@ export function CourseDetail() {
     },
   });
 
+  const claimCert = useMutation({
+    mutationFn: () => apiPost<Certificate>("/certificates/generate", { courseId: id }),
+    onSuccess: (cert) => navigate(`/certificates/${cert._id}`),
+  });
+
   if (!id) return null;
 
   const course = courseQuery.data;
@@ -53,6 +58,11 @@ export function CourseDetail() {
     (progressQuery.data?.completedLessons ?? []).map((x) => String(x)),
   );
   const isEnrolled = !!progressQuery.data;
+  const totalLessons = modules.reduce((n, m) => n + (m.lessons?.length ?? 0), 0);
+  const progressPct =
+    totalLessons > 0 ? Math.round((completedLessonIds.size / totalLessons) * 100) : 0;
+  const certIssued = !!progressQuery.data?.certificateIssued;
+  const certUrl = progressQuery.data?.certificateUrl;
 
   return (
     <div className="relative min-h-screen">
@@ -87,7 +97,7 @@ export function CourseDetail() {
             <div className="mt-6 flex flex-wrap items-center gap-3">
               {isEnrolled ? (
                 <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/15 px-4 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                  <CheckCircle2 className="h-4 w-4" /> Enrolled
+                  <CheckCircle2 className="h-4 w-4" /> Enrolled · {progressPct}%
                 </span>
               ) : (
                 <Button onClick={() => enrollMutation.mutate()} disabled={enrollMutation.isPending}>
@@ -95,9 +105,27 @@ export function CourseDetail() {
                 </Button>
               )}
               <span className="text-sm text-muted-foreground">
-                {modules.length} modules ·{" "}
-                {modules.reduce((n, m) => n + (m.lessons?.length ?? 0), 0)} lessons
+                {modules.length} modules · {totalLessons} lessons
               </span>
+
+              {isEnrolled && progressPct === 100 && !certIssued && (
+                <Button
+                  onClick={() => claimCert.mutate()}
+                  disabled={claimCert.isPending}
+                  className="ml-auto"
+                >
+                  <Award className="h-4 w-4" />
+                  {claimCert.isPending ? "Issuing…" : "Claim certificate"}
+                </Button>
+              )}
+
+              {certIssued && certUrl && (
+                <Link to={certUrl} className="ml-auto">
+                  <Button variant="outline">
+                    <Award className="h-4 w-4" /> View certificate
+                  </Button>
+                </Link>
+              )}
             </div>
           </motion.div>
         )}

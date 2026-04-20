@@ -9,6 +9,8 @@ import { ErrorBoundary } from "./components/ErrorBoundary.tsx";
 import { RouteSuspense } from "./components/RouteSuspense.tsx";
 import { Login } from "./pages/Login.tsx";
 import { Register } from "./pages/Register.tsx";
+import { ForgotPassword } from "./pages/ForgotPassword.tsx";
+import { ResetPassword } from "./pages/ResetPassword.tsx";
 import { Dashboard } from "./pages/Dashboard.tsx";
 import "./styles.css";
 
@@ -32,6 +34,9 @@ const CourseCreate = lazy(() =>
 );
 const CourseManage = lazy(() =>
   import("./pages/CourseManage.tsx").then((m) => ({ default: m.CourseManage })),
+);
+const CertificatePage = lazy(() =>
+  import("./pages/CertificatePage.tsx").then((m) => ({ default: m.CertificatePage })),
 );
 
 const queryClient = new QueryClient({
@@ -60,6 +65,8 @@ ReactDOM.createRoot(rootEl).render(
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route
                   path="/dashboard"
                   element={
@@ -124,6 +131,16 @@ ReactDOM.createRoot(rootEl).render(
                     <RequireAuth>
                       <RouteSuspense>
                         <CourseManage />
+                      </RouteSuspense>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/certificates/:id"
+                  element={
+                    <RequireAuth>
+                      <RouteSuspense>
+                        <CertificatePage />
                       </RouteSuspense>
                     </RequireAuth>
                   }
