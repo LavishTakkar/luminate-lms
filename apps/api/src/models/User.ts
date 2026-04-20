@@ -15,6 +15,8 @@ const userSchema = new Schema(
       learningStyle: String,
     },
     enrolledCourses: [{ type: Schema.Types.ObjectId, ref: "Course" }],
+    passwordResetToken: { type: String, index: true },
+    passwordResetExpires: Date,
   },
   { timestamps: true },
 );
