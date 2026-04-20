@@ -12,3 +12,6 @@ coverage/
 .cache/
 *.tsbuildinfo
 .pnpm-store/
+test-results/
+playwright-report/
+blob-report/
