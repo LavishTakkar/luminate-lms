@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
+import ReactPlayer from "react-player";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -90,6 +91,19 @@ export function LessonViewer() {
               <h1 className="mt-2 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
                 {lesson.title}
               </h1>
+
+              {lesson.videoUrl && (
+                <div className="mt-6 overflow-hidden rounded-[var(--radius)] border border-white/30 bg-black shadow-glass dark:border-white/10">
+                  <div className="aspect-video">
+                    <ReactPlayer
+                      src={lesson.videoUrl}
+                      width="100%"
+                      height="100%"
+                      controls
+                    />
+                  </div>
+                </div>
+              )}
 
               <GlassCard className="mt-6">
                 <article className="prose prose-neutral dark:prose-invert max-w-none text-[15px] leading-relaxed">

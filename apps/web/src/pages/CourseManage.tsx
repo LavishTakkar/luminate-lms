@@ -155,16 +155,20 @@ function ModuleEditor({ mod, onDelete }: { mod: Module; onDelete: () => void }) 
     queryFn: () => apiGet<Lesson[]>(`/modules/${mod._id}/lessons`),
   });
 
+  const [videoUrl, setVideoUrl] = useState("");
+
   const addLesson = useMutation({
     mutationFn: () =>
       apiPost<Lesson>("/lessons", {
         moduleId: mod._id,
         title: newLesson.title,
         content: newLesson.content,
+        ...(videoUrl.trim() ? { videoUrl: videoUrl.trim(), contentType: "video" } : {}),
         order: lessonsQuery.data?.length ?? 0,
       }),
     onSuccess: () => {
       setNewLesson({ title: "", content: "" });
+      setVideoUrl("");
       qc.invalidateQueries({ queryKey: ["admin", "module", mod._id, "lessons"] });
     },
   });
@@ -225,6 +229,11 @@ function ModuleEditor({ mod, onDelete }: { mod: Module; onDelete: () => void }) 
           value={newLesson.title}
           onChange={(e) => setNewLesson((p) => ({ ...p, title: e.target.value }))}
           placeholder="Lesson title"
+        />
+        <Input
+          value={videoUrl}
+          onChange={(e) => setVideoUrl(e.target.value)}
+          placeholder="Video URL (optional) — YouTube, Vimeo, MP4…"
         />
         <textarea
           value={newLesson.content}
